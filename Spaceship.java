@@ -18,7 +18,7 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.PointerInfo;
 import java.awt.MouseInfo;
-
+import java.util.ArrayList;
 
 public class Spaceship{
 	public Spaceship(){
@@ -40,11 +40,12 @@ public class Spaceship{
 		private int y = 10;
 		private int width = 20;
 		private int height = 20;
-		private int speed = 2;
+		private int speed = 1;
 		private boolean up = false;
 		private boolean down = false;
 		private boolean right = false;
 		private boolean left = false;
+		ArrayList<Bullet> bullets = new ArrayList<>();
 
 		public Ship(int x, int y, int width, int height){
 			this.x = x;
@@ -53,8 +54,19 @@ public class Spaceship{
 			this.height = height;
 		}
 
-		public void draw(Graphics g){
+		public void paint(Graphics g){
 			g.fillRect(x,y,width,height);
+
+			if(up)    y -= speed;
+			if(down)  y += speed;
+			if(right) x += speed;
+			if(left)  x -= speed;
+		}
+
+		public void drawBullets(Graphics g){
+			for (Bullet b : bullets){
+				b.paint(g);
+			}
 		}
 
 		public void moveUp(){up = true;}
@@ -67,53 +79,54 @@ public class Spaceship{
 		public void stopRight(){right = false;}
 		public void stopLeft(){left = false;}
 
-		public void move(){
-			if(up)    y -= speed;
-			if(down)  y += speed;
-			if(right) x += speed;
-			if(left)  x -= speed;
-		}
+		public int getX(){return x;}
+		public int getY(){return y;}
+		public int getWidth(){return width;}
+		public int getHeight(){return height;}
 
-		public int getX(){return this.x;}
-		public int getY(){return this.y;}
-
-		public void shoot(Bullet bullet){
-
+		public void shoot(Bullet bullet, int xf, int yf){
+			bullets.add(bullet);
+			bullet.move(xf,yf);
 		}
 	}
 
 	class Bullet{
 		private int speed = 10;
-		private int x, y;
+		private int x, y, xf, yf;
 		private double theta;
 		private Ship ship;
 
-		public Bullet(int x, int y, Ship ship){
-			this.x = x;
-			this.y = y; 
+		public Bullet(Ship ship){
 			this.ship = ship;
+			this.x = ship.getX() + ship.getWidth()/2;
+			this.y = ship.getY() + ship.getHeight()/2; 	
 		}
 
-		public Bullet(int x, int y){
-			this.x = x;
-			this.y = y; 
+		public void move(int xf, int yf){
+			this.xf = xf;
+			this.yf = yf;
+		}
+
+		public void paint(Graphics g){
+			g.fillOval(x, y, 10, 10);
+
+			double dx = xf - x; 
+			double dy = yf - y;
+
+			theta = Math.atan2(dy, dx);	
+
+			if(x+5 > xf && y+5 > yf){
+				xf += (int)(5*(Math.cos(theta)));
+				yf += (int)(5*(Math.sin(theta)));
+			}
+
+			x += (int)(5*(Math.cos(theta)));
+			y += (int)(5*(Math.sin(theta)));
 		}
 	}
 
 	class GamePanel extends JPanel{
-		int shipX = 400; 
-		int shipY = 300;
-		int shipWhidht = 30;
-		int shipHeight = 30;
-		int shipSpeed = 1;
-		boolean up = false;
-		boolean down = false;
-		boolean right = false;
-		boolean left = false;
-		int pX, pY;
-		double theta;
-		int xf, yf;
-		Ship s = new Ship(100,100,20,20);
+		Ship ship = new Ship(100,100,30,30);
 		
 		public GamePanel(){
 			addKeyBindings();
@@ -121,41 +134,16 @@ public class Spaceship{
 			addMouseListener(new MouseAdapter(){
 				@Override
 				public void mousePressed(MouseEvent e){
-					pX = shipX + shipWhidht/2 ; 
-					pY = shipY + shipHeight/2 ;
-
-					xf = e.getX();
-					yf = e.getY();				
+					ship.shoot(new Bullet(ship), e.getX(), e.getY());				
 				}
 			});
-		}
-
-		public void moveBullet(){	
-			double dx = xf - pX; 
-			double dy = yf - pY;
-
-			theta = Math.atan2(dy, dx);	
-			if(pX+5 > xf && pY+5 > yf){
-				xf += (int)(5*(Math.cos(theta)));
-				yf += (int)(5*(Math.sin(theta)));
-			}
-			pX += (int)(5*(Math.cos(theta)));
-			pY += (int)(5*(Math.sin(theta)));
 		}
 
 		@Override
 		public void paintComponent(Graphics g){
 			super.paintComponent(g);
-			g.fillRect(shipX, shipY, shipWhidht, shipHeight); //Ship.draw()
-
-			//Ship.move
-			if(up)    shipY -= shipSpeed;
-			if(down)  shipY += shipSpeed;
-			if(right) shipX += shipSpeed;
-			if(left)  shipX -= shipSpeed;
-
-			g.fillOval(pX, pY, 10, 10);
-			moveBullet();
+			ship.paint(g); 
+			ship.drawBullets(g);
 
 			repaint();
 			try{Thread.sleep(1);}catch(Exception e){}
@@ -186,27 +174,27 @@ public class Spaceship{
 
 		public void addKeyBindings(){
 			addKeyBinding(this, KeyEvent.VK_W, "go_up_p", "go_up_r", (evt)->{
-				up = true;
+				ship.moveUp();
 			}, (evt)->{
-				up = false;
+				ship.stopUp();
 			});		
 
 			addKeyBinding(this, KeyEvent.VK_S, "go_down_p", "go_gown_r", (evt)->{
-				down = true;
+				ship.moveDown();
 			}, (evt)->{
-				down = false;
+				ship.stopDown();
 			});	
 
 			addKeyBinding(this, KeyEvent.VK_D, "go_right_p", "go_right_r", (evt)->{
-				right = true;
+				ship.moveRight();
 			}, (evt)->{
-				right = false; 
+				ship.stopRight(); 
 			});	
 
 			addKeyBinding(this, KeyEvent.VK_A, "go_left_p", "go_left_r", (evt)->{
-				left = true;
+				ship.moveLeft();
 			}, (evt)->{
-				left = false;
+				ship.stopLeft();
 			});	
 		}
 	}
