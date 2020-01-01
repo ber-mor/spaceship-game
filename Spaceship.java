@@ -19,122 +19,46 @@ import java.awt.Point;
 import java.awt.PointerInfo;
 import java.awt.MouseInfo;
 import java.util.ArrayList;
+import javax.swing.SwingUtilities;
+import java.awt.Color;
 
 public class Spaceship{
+	public static final long serialVersionUID = 1L;
+
 	public Spaceship(){
 		initComponents();
 	}
 
 	private void initComponents(){
 		JFrame frame = new JFrame("AAAAHHHH");
-		frame.setSize(1000, 700);
+		frame.setSize(500,500);
+		frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		GamePanel panel = new GamePanel();
-		frame.add(panel); 
-		frame.setLocationRelativeTo(null);
+		frame.add(panel);
+		// frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 		frame.requestFocus();
 	}
 
-	class Ship{
-		private int x = 10;
-		private int y = 10;
-		private int width = 20;
-		private int height = 20;
-		private int speed = 1;
-		private boolean up = false;
-		private boolean down = false;
-		private boolean right = false;
-		private boolean left = false;
-		ArrayList<Bullet> bullets = new ArrayList<>();
-
-		public Ship(int x, int y, int width, int height){
-			this.x = x;
-			this.y = y; 
-			this.width = width;
-			this.height = height;
-		}
-
-		public void paint(Graphics g){
-			g.fillRect(x,y,width,height);
-
-			if(up)    y -= speed;
-			if(down)  y += speed;
-			if(right) x += speed;
-			if(left)  x -= speed;
-		}
-
-		public void drawBullets(Graphics g){
-			for (Bullet b : bullets){
-				b.paint(g);
-			}
-		}
-
-		public void moveUp(){up = true;}
-		public void moveDown(){down = true;}
-		public void moveRight(){right = true;}
-		public void moveLeft(){left = true;}
-
-		public void stopUp(){up = false;}
-		public void stopDown(){down = false;}
-		public void stopRight(){right = false;}
-		public void stopLeft(){left = false;}
-
-		public int getX(){return x;}
-		public int getY(){return y;}
-		public int getWidth(){return width;}
-		public int getHeight(){return height;}
-
-		public void shoot(Bullet bullet, int xf, int yf){
-			bullets.add(bullet);
-			bullet.move(xf,yf);
-		}
-	}
-
-	class Bullet{
-		private int speed = 10;
-		private int x, y, xf, yf;
-		private double theta;
-		private Ship ship;
-
-		public Bullet(Ship ship){
-			this.ship = ship;
-			this.x = ship.getX() + ship.getWidth()/2;
-			this.y = ship.getY() + ship.getHeight()/2; 	
-		}
-
-		public void move(int xf, int yf){
-			this.xf = xf;
-			this.yf = yf;
-		}
-
-		public void paint(Graphics g){
-			g.fillOval(x, y, 10, 10);
-
-			double dx = xf - x; 
-			double dy = yf - y;
-
-			theta = Math.atan2(dy, dx);	
-
-			if(x+5 > xf && y+5 > yf){
-				xf += (int)(5*(Math.cos(theta)));
-				yf += (int)(5*(Math.sin(theta)));
-			}
-
-			x += (int)(5*(Math.cos(theta)));
-			y += (int)(5*(Math.sin(theta)));
-		}
-	}
-
 	class GamePanel extends JPanel{
-		Ship ship = new Ship(100,100,30,30);
-		
+		public static final long serialVersionUID = 1L;
+		ArrayList<Bullet> bullets = new ArrayList<>();
+		ArrayList<Enemy> enemies = new ArrayList<>();
+		Ship ship = new Ship(100,100,50,50,bullets, "uni.png");
+		private int bgMove = 0;
+
 		public GamePanel(){
+			setBackground(Color.BLACK);
 			addKeyBindings();
 
 			addMouseListener(new MouseAdapter(){
 				@Override
 				public void mousePressed(MouseEvent e){
-					ship.shoot(new Bullet(ship), e.getX(), e.getY());				
+					if(SwingUtilities.isLeftMouseButton(e))
+						ship.shoot(new Bullet(ship,"heart.png"), e.getX(), e.getY());
+					if(SwingUtilities.isRightMouseButton(e))
+						System.out.println("Click derecho");
 				}
 			});
 		}
@@ -142,14 +66,65 @@ public class Spaceship{
 		@Override
 		public void paintComponent(Graphics g){
 			super.paintComponent(g);
-			ship.paint(g); 
-			ship.drawBullets(g);
-
+			drawBackground(g);
+			bgMove-=2;
+			g.setColor(Color.WHITE);
+			ship.paint(g);
+			drawBullets(g);
+			checkBorderCoalition();
 			repaint();
-			try{Thread.sleep(1);}catch(Exception e){}
+			try{Thread.sleep(4);}catch(Exception e){}
 		}
 
-		public void addKeyBinding(JComponent comp, int keyCode, String id1, String id2, 
+		public void drawBackground(Graphics g){
+			g.setColor(new Color(25,25,25));
+			int vLines = bgMove; 
+			int hLines = 0; 
+
+			while(vLines < getWidth()){
+				g.drawLine(vLines, 0, vLines, getHeight());
+				vLines += 40;
+			}
+
+			while(hLines < getHeight()){
+				g.drawLine(0, hLines, getWidth(), hLines);
+				hLines += 40;
+			}
+		}
+
+		public void drawBullets(Graphics g){
+			// If the current element is deleted, the reference used 
+			// for iteration gets deleted, so it crashes
+			// for (Bullet b : bullets){
+			// 	b.paint(g);
+			// 	if (b.getX() < -b.getSize() || b.getX()>getWidth() ||
+			// 		b.getY() < -b.getSize() || b.getY()>getHeight())
+			// 		bullets.remove(0);
+			// }c
+
+			// Removes bullets out of screen from ArrayList
+			// Using indexes instead, the current element can be deleted
+			for (int i=0; i<bullets.size(); i++){
+				Bullet b = bullets.get(i);
+				b.paint(g);
+				if (b.getX() < -b.getSize() || b.getX()>getWidth() ||
+					b.getY() < -b.getSize() || b.getY()>getHeight())
+					bullets.remove(0);
+			}
+		}
+
+		public void drawEnemies(Graphics g){
+			for (Enemy e : enemies) e.paint(g);
+		}
+
+		public void checkBorderCoalition(){
+			if(ship.getX() >= getWidth()-ship.getWidth()) ship.stopX(getWidth()-ship.getWidth());
+			if(ship.getX() <= 0) ship.stopX(0);
+			if(ship.getY() >= getHeight()-ship.getHeight()) ship.stopY(getHeight()-ship.getHeight());
+			if(ship.getY() <= 0) ship.stopY(0);
+		}
+
+		public void addKeyBinding(JComponent comp, int keyCode, String id1, String id2,
 				ActionListener actionPressed, ActionListener actionReleased){
 			InputMap im = comp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
 			ActionMap ap = comp.getActionMap();
@@ -158,6 +133,7 @@ public class Spaceship{
 			im.put(KeyStroke.getKeyStroke(keyCode, 0, true), id2);
 
 			ap.put(id1, new AbstractAction(){
+				public static final long serialVersionUID = 1L;
 				@Override
 				public void actionPerformed(ActionEvent e){
 					actionPressed.actionPerformed(e);
@@ -165,6 +141,7 @@ public class Spaceship{
 			});
 
 			ap.put(id2, new AbstractAction(){
+				public static final long serialVersionUID = 1L;
 				@Override
 				public void actionPerformed(ActionEvent e){
 					actionReleased.actionPerformed(e);
@@ -177,25 +154,31 @@ public class Spaceship{
 				ship.moveUp();
 			}, (evt)->{
 				ship.stopUp();
-			});		
+			});
 
 			addKeyBinding(this, KeyEvent.VK_S, "go_down_p", "go_gown_r", (evt)->{
 				ship.moveDown();
 			}, (evt)->{
 				ship.stopDown();
-			});	
+			});
 
 			addKeyBinding(this, KeyEvent.VK_D, "go_right_p", "go_right_r", (evt)->{
 				ship.moveRight();
 			}, (evt)->{
-				ship.stopRight(); 
-			});	
+				ship.stopRight();
+			});
 
 			addKeyBinding(this, KeyEvent.VK_A, "go_left_p", "go_left_r", (evt)->{
 				ship.moveLeft();
 			}, (evt)->{
 				ship.stopLeft();
-			});	
+			});
+
+			addKeyBinding(this, KeyEvent.VK_SPACE, "dash_p", "dash_r", (evt)->{
+				ship.dash();
+			}, (evt)->{
+				ship.stopDash();
+			});
 		}
 	}
 
