@@ -1,0 +1,215 @@
+[1mdiff --git a/Spaceship.java b/Spaceship.java[m
+[1mindex 2219f6d..78671f7 100644[m
+[1m--- a/Spaceship.java[m
+[1m+++ b/Spaceship.java[m
+[36m@@ -18,7 +18,7 @@[m [mimport java.awt.Color;[m
+ import java.awt.Point;[m
+ import java.awt.PointerInfo;[m
+ import java.awt.MouseInfo;[m
+[31m-[m
+[32m+[m[32mimport java.util.ArrayList;[m
+ [m
+ public class Spaceship{[m
+ 	public Spaceship(){[m
+[36m@@ -40,11 +40,12 @@[m [mpublic class Spaceship{[m
+ 		private int y = 10;[m
+ 		private int width = 20;[m
+ 		private int height = 20;[m
+[31m-		private int speed = 2;[m
+[32m+[m		[32mprivate int speed = 1;[m
+ 		private boolean up = false;[m
+ 		private boolean down = false;[m
+ 		private boolean right = false;[m
+ 		private boolean left = false;[m
+[32m+[m		[32mArrayList<Bullet> bullets = new ArrayList<>();[m
+ [m
+ 		public Ship(int x, int y, int width, int height){[m
+ 			this.x = x;[m
+[36m@@ -53,8 +54,19 @@[m [mpublic class Spaceship{[m
+ 			this.height = height;[m
+ 		}[m
+ [m
+[31m-		public void draw(Graphics g){[m
+[32m+[m		[32mpublic void paint(Graphics g){[m
+ 			g.fillRect(x,y,width,height);[m
+[32m+[m
+[32m+[m			[32mif(up)    y -= speed;[m
+[32m+[m			[32mif(down)  y += speed;[m
+[32m+[m			[32mif(right) x += speed;[m
+[32m+[m			[32mif(left)  x -= speed;[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32mpublic void drawBullets(Graphics g){[m
+[32m+[m			[32mfor (Bullet b : bullets){[m
+[32m+[m				[32mb.paint(g);[m
+[32m+[m			[32m}[m
+ 		}[m
+ [m
+ 		public void moveUp(){up = true;}[m
+[36m@@ -67,53 +79,54 @@[m [mpublic class Spaceship{[m
+ 		public void stopRight(){right = false;}[m
+ 		public void stopLeft(){left = false;}[m
+ [m
+[31m-		public void move(){[m
+[31m-			if(up)    y -= speed;[m
+[31m-			if(down)  y += speed;[m
+[31m-			if(right) x += speed;[m
+[31m-			if(left)  x -= speed;[m
+[31m-		}[m
+[31m-[m
+[31m-		public int getX(){return this.x;}[m
+[31m-		public int getY(){return this.y;}[m
+[31m-[m
+[31m-		public void shoot(Bullet bullet){[m
+[32m+[m		[32mpublic int getX(){return x;}[m
+[32m+[m		[32mpublic int getY(){return y;}[m
+[32m+[m		[32mpublic int getWidth(){return width;}[m
+[32m+[m		[32mpublic int getHeight(){return height;}[m
+ [m
+[32m+[m		[32mpublic void shoot(Bullet bullet, int xf, int yf){[m
+[32m+[m			[32mbullets.add(bullet);[m
+[32m+[m			[32mbullet.move(xf,yf);[m
+ 		}[m
+ 	}[m
+ [m
+ 	class Bullet{[m
+ 		private int speed = 10;[m
+[31m-		private int x, y;[m
+[32m+[m		[32mprivate int x, y, xf, yf;[m
+ 		private double theta;[m
+ 		private Ship ship;[m
+ [m
+[31m-		public Bullet(int x, int y, Ship ship){[m
+[31m-			this.x = x;[m
+[31m-			this.y = y; [m
+[32m+[m		[32mpublic Bullet(Ship ship){[m
+ 			this.ship = ship;[m
+[32m+[m			[32mthis.x = ship.getX() + ship.getWidth()/2;[m
+[32m+[m			[32mthis.y = ship.getY() + ship.getHeight()/2;[m[41m 	[m
+ 		}[m
+ [m
+[31m-		public Bullet(int x, int y){[m
+[31m-			this.x = x;[m
+[31m-			this.y = y; [m
+[32m+[m		[32mpublic void move(int xf, int yf){[m
+[32m+[m			[32mthis.xf = xf;[m
+[32m+[m			[32mthis.yf = yf;[m
+[32m+[m		[32m}[m
+[32m+[m
+[32m+[m		[32mpublic void paint(Graphics g){[m
+[32m+[m			[32mg.fillOval(x, y, 10, 10);[m
+[32m+[m
+[32m+[m			[32mdouble dx = xf - x;[m[41m [m
+[32m+[m			[32mdouble dy = yf - y;[m
+[32m+[m
+[32m+[m			[32mtheta = Math.atan2(dy, dx);[m[41m	[m
+[32m+[m
+[32m+[m			[32mif(x+5 > xf && y+5 > yf){[m
+[32m+[m				[32mxf += (int)(5*(Math.cos(theta)));[m
+[32m+[m				[32myf += (int)(5*(Math.sin(theta)));[m
+[32m+[m			[32m}[m
+[32m+[m
+[32m+[m			[32mx += (int)(5*(Math.cos(theta)));[m
+[32m+[m			[32my += (int)(5*(Math.sin(theta)));[m
+ 		}[m
+ 	}[m
+ [m
+ 	class GamePanel extends JPanel{[m
+[31m-		int shipX = 400; [m
+[31m-		int shipY = 300;[m
+[31m-		int shipWhidht = 30;[m
+[31m-		int shipHeight = 30;[m
+[31m-		int shipSpeed = 1;[m
+[31m-		boolean up = false;[m
+[31m-		boolean down = false;[m
+[31m-		boolean right = false;[m
+[31m-		boolean left = false;[m
+[31m-		int pX, pY;[m
+[31m-		double theta;[m
+[31m-		int xf, yf;[m
+[31m-		Ship s = new Ship(100,100,20,20);[m
+[32m+[m		[32mShip ship = new Ship(100,100,30,30);[m
+ 		[m
+ 		public GamePanel(){[m
+ 			addKeyBindings();[m
+[36m@@ -121,41 +134,16 @@[m [mpublic class Spaceship{[m
+ 			addMouseListener(new MouseAdapter(){[m
+ 				@Override[m
+ 				public void mousePressed(MouseEvent e){[m
+[31m-					pX = shipX + shipWhidht/2 ; [m
+[31m-					pY = shipY + shipHeight/2 ;[m
+[31m-[m
+[31m-					xf = e.getX();[m
+[31m-					yf = e.getY();				[m
+[32m+[m					[32mship.shoot(new Bullet(ship), e.getX(), e.getY());[m[41m				[m
+ 				}[m
+ 			});[m
+ 		}[m
+ [m
+[31m-		public void moveBullet(){	[m
+[31m-			double dx = xf - pX; [m
+[31m-			double dy = yf - pY;[m
+[31m-[m
+[31m-			theta = Math.atan2(dy, dx);	[m
+[31m-			if(pX+5 > xf && pY+5 > yf){[m
+[31m-				xf += (int)(5*(Math.cos(theta)));[m
+[31m-				yf += (int)(5*(Math.sin(theta)));[m
+[31m-			}[m
+[31m-			pX += (int)(5*(Math.cos(theta)));[m
+[31m-			pY += (int)(5*(Math.sin(theta)));[m
+[31m-		}[m
+[31m-[m
+ 		@Override[m
+ 		public void paintComponent(Graphics g){[m
+ 			super.paintComponent(g);[m
+[31m-			g.fillRect(shipX, shipY, shipWhidht, shipHeight); //Ship.draw()[m
+[31m-[m
+[31m-			//Ship.move[m
+[31m-			if(up)    shipY -= shipSpeed;[m
+[31m-			if(down)  shipY += shipSpeed;[m
+[31m-			if(right) shipX += shipSpeed;[m
+[31m-			if(left)  shipX -= shipSpeed;[m
+[31m-[m
+[31m-			g.fillOval(pX, pY, 10, 10);[m
+[31m-			moveBullet();[m
+[32m+[m			[32mship.paint(g);[m[41m [m
+[32m+[m			[32mship.drawBullets(g);[m
+ [m
+ 			repaint();[m
+ 			try{Thread.sleep(1);}catch(Exception e){}[m
+[36m@@ -186,27 +174,27 @@[m [mpublic class Spaceship{[m
+ [m
+ 		public void addKeyBindings(){[m
+ 			addKeyBinding(this, KeyEvent.VK_W, "go_up_p", "go_up_r", (evt)->{[m
+[31m-				up = true;[m
+[32m+[m				[32mship.moveUp();[m
+ 			}, (evt)->{[m
+[31m-				up = false;[m
+[32m+[m				[32mship.stopUp();[m
+ 			});		[m
+ [m
+ 			addKeyBinding(this, KeyEvent.VK_S, "go_down_p", "go_gown_r", (evt)->{[m
+[31m-				down = true;[m
+[32m+[m				[32mship.moveDown();[m
+ 			}, (evt)->{[m
+[31m-				down = false;[m
+[32m+[m				[32mship.stopDown();[m
+ 			});	[m
+ [m
+ 			addKeyBinding(this, KeyEvent.VK_D, "go_right_p", "go_right_r", (evt)->{[m
+[31m-				right = true;[m
+[32m+[m				[32mship.moveRight();[m
+ 			}, (evt)->{[m
+[31m-				right = false; [m
+[32m+[m				[32mship.stopRight();[m[41m [m
+ 			});	[m
+ [m
+ 			addKeyBinding(this, KeyEvent.VK_A, "go_left_p", "go_left_r", (evt)->{[m
+[31m-				left = true;[m
+[32m+[m				[32mship.moveLeft();[m
+ 			}, (evt)->{[m
+[31m-				left = false;[m
+[32m+[m				[32mship.stopLeft();[m
+ 			});	[m
+ 		}[m
+ 	}[m

@@ -18,6 +18,7 @@ public class Ship{
 	private boolean dash = false;
 	private int dashSpeed = 3;
 	private Image image;
+	private Image imageDash;
 
 	public Ship(int x, int y, int width, int height, ArrayList<Bullet> bullets){
 		this.x = x;
@@ -35,13 +36,17 @@ public class Ship{
 		this.bullets = bullets;
 
 		this.image = Toolkit.getDefaultToolkit().getImage(imageName);
+		this.imageDash = Toolkit.getDefaultToolkit().getImage("unidash.png");
 	}
 
 	public void paint(Graphics g){
 		if(image == null)
 			g.fillOval(x,y,width,height);
 		else
-			g.drawImage(image,x,y,null);
+			if (dash)
+				g.drawImage(imageDash,x,y,null);
+			else
+				g.drawImage(image,x,y,null);
 
 		if(up)    y -= speed;
 		if(down)  y += speed;
@@ -78,7 +83,7 @@ public class Ship{
 	} 
 
 	public void stopDash(){
-		if(dashCount == 5){
+		if(dashCount == 10){
 			speed /= dashSpeed;
 			dash = false;
 			dashCount = 0;
@@ -94,6 +99,6 @@ public class Ship{
 	}
 
 	public void swingSword(){
-
+		
 	}
 }

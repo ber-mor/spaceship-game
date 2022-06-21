@@ -21,6 +21,8 @@ import java.awt.MouseInfo;
 import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 import java.awt.Color;
+import java.awt.Toolkit;
+import java.awt.Image;
 
 public class Spaceship{
 	public static final long serialVersionUID = 1L;
@@ -66,29 +68,43 @@ public class Spaceship{
 		@Override
 		public void paintComponent(Graphics g){
 			super.paintComponent(g);
+			g.drawImage(Toolkit.getDefaultToolkit().getImage("clouds.png"),0,0,null);
 			drawBackground(g);
 			bgMove-=2;
 			g.setColor(Color.WHITE);
 			ship.paint(g);
 			drawBullets(g);
 			checkBorderCoalition();
+			// drawEnemies(g);
 			repaint();
 			try{Thread.sleep(4);}catch(Exception e){}
 		}
 
 		public void drawBackground(Graphics g){
-			g.setColor(new Color(25,25,25));
+			g.setColor(new Color(255,255,255));
 			int vLines = bgMove; 
 			int hLines = 0; 
 
-			while(vLines < getWidth()){
-				g.drawLine(vLines, 0, vLines, getHeight());
-				vLines += 40;
-			}
+			// while(vLines < getWidth()){
+			// 	g.drawLine(vLines, 0, vLines, getHeight());
+			// 	vLines += 40;
+			// }
 
-			while(hLines < getHeight()){
-				g.drawLine(0, hLines, getWidth(), hLines);
-				hLines += 40;
+			// while(hLines < getHeight()){
+			// 	g.drawLine(0, hLines, getWidth(), hLines);
+			// 	hLines += 40;
+			// }
+
+			/////////////////////////////////////////////////
+
+			while(vLines < getWidth()){
+				g.setColor(new Color(255,255,255));
+				g.fillRect(vLines, 0, 20,20);
+				g.fillRect(vLines, getHeight()-20, 20,20);
+				g.setColor(new Color(255, 194, 194));
+				g.fillRect(vLines+2, 0+2, 16,16);
+				g.fillRect(vLines+2, getHeight()-20+2, 16,16);
+				vLines += 20;
 			}
 		}
 
@@ -114,7 +130,19 @@ public class Spaceship{
 		}
 
 		public void drawEnemies(Graphics g){
-			for (Enemy e : enemies) e.paint(g);
+			// if(enemies.size()<=5){
+				for (int i=0; i<5; i++){
+					enemies.add(new Enemy(getWidth(),(int)(Math.random()*getHeight()),50,50,"goat.png"));
+				}
+				// try{
+					
+				// Thread.sleep(1000);
+				// }catch(Exception e){
+
+				// }
+
+				for (Enemy e : enemies) e.moveTo(g, ship.getX(), ship.getY());
+			// }
 		}
 
 		public void checkBorderCoalition(){
@@ -177,7 +205,13 @@ public class Spaceship{
 			addKeyBinding(this, KeyEvent.VK_SPACE, "dash_p", "dash_r", (evt)->{
 				ship.dash();
 			}, (evt)->{
-				ship.stopDash();
+				
+			});
+
+			addKeyBinding(this, KeyEvent.VK_ENTER, "shoot_p", "shoot_r", (evt)->{
+				ship.shoot(new Bullet(ship,"heart.png"), getWidth()-20, ship.getY());
+			}, (evt)->{
+				
 			});
 		}
 	}
